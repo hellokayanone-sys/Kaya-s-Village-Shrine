@@ -231,12 +231,12 @@ const App = () => {
         return (
             <img 
                 src={config.customLogo} 
-                className={`object-contain ${size === 'small' ? 'h-14 w-auto' : 'h-48 w-auto'} ${className}`} 
+                className={`object-contain ${size === 'small' ? 'h-14 w-auto' : 'h-64 md:h-96 w-auto'} drop-shadow-xl ${className}`} 
                 alt="Shrine Logo" 
             />
         );
     }
-    return <ShrineIcon className={`${size === 'small' ? 'w-14 h-14' : 'w-48 h-48'} text-farm-red opacity-90 ${className}`} />;
+    return <ShrineIcon className={`${size === 'small' ? 'w-14 h-14' : 'w-64 h-64 md:w-96 md:h-96'} text-farm-red opacity-90 drop-shadow-xl ${className}`} />;
   };
 
   // --- Render: Configuration Check ---
@@ -330,7 +330,8 @@ const App = () => {
             // Increased space-y for mobile
             <div className="text-center space-y-16 md:space-y-12 animate-fade-in w-full">
                 <div className="flex flex-col items-center space-y-10 md:space-y-8">
-                    <div className="p-12 bg-white rounded-[3rem] shadow-xl shadow-farm-border/50 border-[6px] border-farm-bg">
+                    {/* Replaced white box with transparent container and larger logo */}
+                    <div className="p-4 relative z-10 transform hover:scale-105 transition-transform duration-700">
                         <Logo size="large" />
                     </div>
                     <div>
