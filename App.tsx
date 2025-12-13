@@ -3,12 +3,11 @@ import { ViewState, FortuneSlip, UserHistory, AppConfig } from './types';
 import AdminPanel from './components/AdminPanel';
 import FortuneSlipView from './components/FortuneSlip';
 import { ShrineIcon } from './components/Icons';
+import { db, isFirebaseConfigured } from './firebaseConfig';
+import { ref, onValue, set } from "firebase/database";
 
 // --- Constants ---
 const ADMIN_PASSCODE_DEFAULT = "takaramono"; 
-const STORAGE_KEY_FORTUNES = "kaya_shrine_fortunes_v3"; 
-const STORAGE_KEY_HISTORY = "kaya_shrine_history_v3"; 
-const STORAGE_KEY_CONFIG = "kaya_shrine_config_v3";
 // Sound effect for successful entry
 const SOUND_ENTER_URL = "https://assets.mixkit.co/sfx/preview/mixkit-positive-notification-951.mp3";
 
@@ -32,6 +31,7 @@ const App = () => {
   const [revealedFortune, setRevealedFortune] = useState<FortuneSlip | null>(null);
   const [isShaking, setIsShaking] = useState(false);
   const [isGlowing, setIsGlowing] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
 
   // --- Effects ---
   useEffect(() => {
@@ -40,39 +40,71 @@ const App = () => {
     const monthStr = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
     setCurrentMonth(monthStr);
 
-    // 2. Load Data from LocalStorage
-    const storedFortunes = localStorage.getItem(STORAGE_KEY_FORTUNES);
-    const storedHistory = localStorage.getItem(STORAGE_KEY_HISTORY);
-    const storedConfig = localStorage.getItem(STORAGE_KEY_CONFIG);
-
-    if (storedFortunes) {
-        const parsed: FortuneSlip[] = JSON.parse(storedFortunes);
-        const currentMonthFortunes = parsed.filter(f => f.month === monthStr);
-        setFortunes(currentMonthFortunes);
-    }
-    
-    if (storedHistory) {
-        setUserHistory(JSON.parse(storedHistory));
+    if (!isFirebaseConfigured) {
+        setIsLoading(false);
+        return;
     }
 
-    if (storedConfig) {
-        setConfig(JSON.parse(storedConfig));
-    }
+    // 2. Realtime Listeners (Firebase)
+    const fortunesRef = ref(db, 'fortunes');
+    const configRef = ref(db, 'config');
+    const historyRef = ref(db, 'history');
+
+    const unsubscribeFortunes = onValue(fortunesRef, (snapshot) => {
+        const data = snapshot.val();
+        if (data) {
+             // Filter for current month client-side for simplicity, 
+             // but we store all to keep history for admin
+             const allFortunes: FortuneSlip[] = Array.isArray(data) ? data : Object.values(data);
+             // We keep all fortunes in state so admin can see them, but filter for draw logic
+             setFortunes(allFortunes);
+        } else {
+            setFortunes([]);
+        }
+        setIsLoading(false);
+    });
+
+    const unsubscribeConfig = onValue(configRef, (snapshot) => {
+        const data = snapshot.val();
+        if (data) setConfig(data);
+    });
+
+    const unsubscribeHistory = onValue(historyRef, (snapshot) => {
+        const data = snapshot.val();
+        if (data) {
+            setUserHistory(Array.isArray(data) ? data : []);
+        } else {
+            setUserHistory([]);
+        }
+    });
+
+    return () => {
+        unsubscribeFortunes();
+        unsubscribeConfig();
+        unsubscribeHistory();
+    };
   }, []);
 
   // --- Helpers ---
-  const saveFortunes = (newFortunes: FortuneSlip[]) => {
-    setFortunes(newFortunes);
-    localStorage.setItem(STORAGE_KEY_FORTUNES, JSON.stringify(newFortunes));
+  const saveFortunes = async (newFortunes: FortuneSlip[]) => {
+    if (!isFirebaseConfigured) return;
+    try {
+        await set(ref(db, 'fortunes'), newFortunes);
+    } catch (e) {
+        console.error("Firebase Error", e);
+        alert("Failed to save to cloud. Check internet connection.");
+    }
   };
 
-  const saveConfig = (newConfig: AppConfig) => {
+  const saveConfig = async (newConfig: AppConfig) => {
+      if (!isFirebaseConfigured) return;
       try {
-          localStorage.setItem(STORAGE_KEY_CONFIG, JSON.stringify(newConfig));
+          await set(ref(db, 'config'), newConfig);
+          // Optimistic update handled by listener, but we can set state too
           setConfig(newConfig);
       } catch (e) {
-          console.error("Failed to save config to localStorage:", e);
-          alert("Could not save settings. Storage might be full or the image is too large.");
+          console.error("Firebase Error", e);
+          alert("Could not save settings. Storage might be full (image too large) or permission denied.");
       }
   };
 
@@ -134,8 +166,11 @@ const App = () => {
       }
   };
 
-  const handleDrawFortune = () => {
-    if (fortunes.length === 0) {
+  const handleDrawFortune = async () => {
+    // Filter fortunes for this month only
+    const monthlyFortunes = fortunes.filter(f => f.month === currentMonth);
+
+    if (monthlyFortunes.length === 0) {
         alert("The shrine box feels empty... (No fortunes configured for this month)");
         return;
     }
@@ -149,28 +184,42 @@ const App = () => {
         setIsShaking(true); // Start shaking
     }, 500);
 
-    setTimeout(() => {
+    setTimeout(async () => {
         // Reveal
         setIsShaking(false);
         setIsGlowing(false);
 
         // Logic
-        const randomIndex = Math.floor(Math.random() * fortunes.length);
-        const drawn = fortunes[randomIndex];
+        const randomIndex = Math.floor(Math.random() * monthlyFortunes.length);
+        const drawn = monthlyFortunes[randomIndex];
         setRevealedFortune(drawn);
 
-        // Save history
-        const newHistory = [...userHistory];
-        let record = newHistory.find(u => u.email === email);
-        if (!record) {
-            record = { email, draws: {} };
-            newHistory.push(record);
+        // Save history to Firebase
+        if (isFirebaseConfigured) {
+            const newHistory = [...userHistory];
+            let recordIndex = newHistory.findIndex(u => u.email === email);
+            
+            if (recordIndex === -1) {
+                newHistory.push({ email, draws: { [currentMonth]: drawn.id } });
+            } else {
+                // We must clone the inner object to avoid mutation issues if we were using state directly without deep copy, 
+                // but for simple array replace it's fine.
+                newHistory[recordIndex] = {
+                    ...newHistory[recordIndex],
+                    draws: {
+                        ...newHistory[recordIndex].draws,
+                        [currentMonth]: drawn.id
+                    }
+                };
+            }
+
+            try {
+                await set(ref(db, 'history'), newHistory);
+            } catch(e) {
+                console.error("Save history failed", e);
+                // Continue showing result anyway
+            }
         }
-        record.draws[currentMonth] = drawn.id;
-        
-        // Persist history
-        setUserHistory(newHistory);
-        localStorage.setItem(STORAGE_KEY_HISTORY, JSON.stringify(newHistory));
 
         setView('REVEAL');
     }, 2500);
@@ -190,8 +239,43 @@ const App = () => {
     return <ShrineIcon className={`${size === 'small' ? 'w-14 h-14' : 'w-48 h-48'} text-farm-red opacity-90 ${className}`} />;
   };
 
-  // --- Render ---
+  // --- Render: Configuration Check ---
+  if (!isFirebaseConfigured) {
+      return (
+        <div className="min-h-screen bg-farm-bg flex items-center justify-center p-8 font-sans">
+            <div className="bg-white p-8 rounded-[2.5rem] shadow-xl border border-farm-border max-w-lg text-center space-y-6">
+                <div className="w-16 h-16 bg-farm-red/10 rounded-full flex items-center justify-center mx-auto text-3xl">⚙️</div>
+                <h1 className="text-2xl font-bold text-farm-dark font-heading">Database Setup Required</h1>
+                <p className="text-farm-gray leading-relaxed">
+                    To sync the shrine across all devices, you must connect a database.
+                </p>
+                <div className="bg-farm-bg p-4 rounded-xl text-left text-sm space-y-2 text-farm-dark/80">
+                    <p>1. Open <b>firebaseConfig.ts</b> in your project.</p>
+                    <p>2. Create a free project at <a href="https://console.firebase.google.com" target="_blank" className="text-farm-red underline font-bold">console.firebase.google.com</a>.</p>
+                    <p>3. Create a <b>Realtime Database</b> in "Test Mode".</p>
+                    <p>4. Copy the project config keys into the file.</p>
+                </div>
+                <button onClick={() => window.location.reload()} className="w-full py-3 bg-farm-dark text-white rounded-xl font-bold hover:bg-black transition-colors">
+                    I have updated the file
+                </button>
+            </div>
+        </div>
+      );
+  }
 
+  // --- Render: Loading ---
+  if (isLoading) {
+      return (
+          <div className="min-h-screen bg-farm-bg flex items-center justify-center font-sans">
+              <div className="animate-pulse flex flex-col items-center gap-4">
+                  <ShrineIcon className="w-16 h-16 text-farm-gray/30" />
+                  <span className="text-farm-gray font-bold tracking-widest text-xs uppercase">Connecting to Shrine...</span>
+              </div>
+          </div>
+      )
+  }
+
+  // --- Render: Admin ---
   if (view === 'ADMIN') {
     return (
         <AdminPanel 

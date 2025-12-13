@@ -4,14 +4,15 @@ import { ImageIcon } from './Icons';
 
 interface Props {
   currentFortunes: FortuneSlip[];
-  onUpdateFortunes: (fortunes: FortuneSlip[]) => void;
+  onUpdateFortunes: (fortunes: FortuneSlip[]) => Promise<void>;
   currentConfig: AppConfig;
-  onUpdateConfig: (config: AppConfig) => void;
+  onUpdateConfig: (config: AppConfig) => Promise<void>;
   onClose: () => void;
 }
 
 const AdminPanel: React.FC<Props> = ({ currentFortunes, onUpdateFortunes, currentConfig, onUpdateConfig, onClose }) => {
   const [passcodeEdit, setPasscodeEdit] = useState(currentConfig.userPasscode);
+  const [isProcessing, setIsProcessing] = useState(false);
   
   // Manual Entry State
   const [newLevel, setNewLevel] = useState<FortuneLevel>(FortuneLevel.Kichi);
@@ -40,8 +41,10 @@ const AdminPanel: React.FC<Props> = ({ currentFortunes, onUpdateFortunes, curren
     });
   };
 
-  const handleSaveConfig = () => {
-      onUpdateConfig({ ...currentConfig, userPasscode: passcodeEdit });
+  const handleSaveConfig = async () => {
+      setIsProcessing(true);
+      await onUpdateConfig({ ...currentConfig, userPasscode: passcodeEdit });
+      setIsProcessing(false);
       alert("Settings updated!");
   };
 
@@ -49,31 +52,35 @@ const AdminPanel: React.FC<Props> = ({ currentFortunes, onUpdateFortunes, curren
     if (e.target.files && e.target.files[0]) {
       const file = e.target.files[0];
 
-      // Size check (1MB limit to be safe with LocalStorage)
+      // Size check (1MB limit to be safe with database limits and performance)
       if (file.size > 1024 * 1024) {
           alert("Logo image is too large. Please use a compressed image under 1MB.");
           if (logoInputRef.current) logoInputRef.current.value = '';
           return;
       }
 
+      setIsProcessing(true);
       try {
         const base64 = await fileToBase64(file);
-        onUpdateConfig({ ...currentConfig, customLogo: base64 });
+        await onUpdateConfig({ ...currentConfig, customLogo: base64 });
       } catch (err) {
         alert("Failed to process logo image.");
       }
+      setIsProcessing(false);
     }
     // Reset input
     if (logoInputRef.current) logoInputRef.current.value = '';
   };
 
-  const handleRemoveLogo = () => {
+  const handleRemoveLogo = async () => {
     if (confirm("Reset to default Shrine Icon?")) {
-        onUpdateConfig({ ...currentConfig, customLogo: undefined });
+        setIsProcessing(true);
+        await onUpdateConfig({ ...currentConfig, customLogo: undefined });
+        setIsProcessing(false);
     }
   };
 
-  const handleAddFortune = () => {
+  const handleAddFortune = async () => {
     if (!newPoem || !newFocusOn || !newDoingWell || !adviceLuck) {
         alert("Please fill in at least the poem and main fields.");
         return;
@@ -97,7 +104,9 @@ const AdminPanel: React.FC<Props> = ({ currentFortunes, onUpdateFortunes, curren
         }
     };
 
-    onUpdateFortunes([...currentFortunes, newFortune]);
+    setIsProcessing(true);
+    await onUpdateFortunes([...currentFortunes, newFortune]);
+    setIsProcessing(false);
     
     // Reset Form
     setNewPoem('');
@@ -110,9 +119,11 @@ const AdminPanel: React.FC<Props> = ({ currentFortunes, onUpdateFortunes, curren
     alert("Fortune added to the box!");
   };
 
-  const handleDelete = (id: string) => {
+  const handleDelete = async (id: string) => {
       if (confirm("Remove this fortune?")) {
-          onUpdateFortunes(currentFortunes.filter(f => f.id !== id));
+          setIsProcessing(true);
+          await onUpdateFortunes(currentFortunes.filter(f => f.id !== id));
+          setIsProcessing(false);
       }
   };
 
@@ -127,26 +138,30 @@ const AdminPanel: React.FC<Props> = ({ currentFortunes, onUpdateFortunes, curren
   const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file && activeFortuneIdForUpload) {
-        // Simple size check (1MB limit to be safe with LocalStorage)
+        // Simple size check (1MB limit)
         if (file.size > 1024 * 1024) {
             alert("Image file is too large. Please use a compressed image under 1MB.");
             return;
         }
 
+        setIsProcessing(true);
         try {
             const base64 = await fileToBase64(file);
             const updated = currentFortunes.map(f => f.id === activeFortuneIdForUpload ? { ...f, imageUrl: base64 } : f);
-            onUpdateFortunes(updated);
+            await onUpdateFortunes(updated);
         } catch (err) {
             alert("Failed to upload image.");
         }
+        setIsProcessing(false);
     }
   };
 
-  const handleRemoveImage = (id: string) => {
+  const handleRemoveImage = async (id: string) => {
       if (confirm("Remove this image?")) {
+          setIsProcessing(true);
           const updated = currentFortunes.map(f => f.id === id ? { ...f, imageUrl: undefined } : f);
-          onUpdateFortunes(updated);
+          await onUpdateFortunes(updated);
+          setIsProcessing(false);
       }
   };
 
@@ -162,7 +177,10 @@ const AdminPanel: React.FC<Props> = ({ currentFortunes, onUpdateFortunes, curren
                 <h2 className="text-3xl font-bold text-farm-dark font-heading">Shrine Admin Panel</h2>
                 <p className="text-farm-gray mt-2 font-medium">Manage Kaya's Village Shrine settings.</p>
             </div>
-            <button onClick={onClose} className="px-8 py-3 rounded-full border-2 border-farm-border text-farm-gray hover:bg-farm-bg hover:text-farm-dark transition-colors bg-white font-bold">Exit</button>
+            <div className="flex items-center gap-4">
+                {isProcessing && <span className="text-farm-red font-bold animate-pulse text-sm">Saving to Cloud...</span>}
+                <button disabled={isProcessing} onClick={onClose} className="px-8 py-3 rounded-full border-2 border-farm-border text-farm-gray hover:bg-farm-bg hover:text-farm-dark transition-colors bg-white font-bold">Exit</button>
+            </div>
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
@@ -188,7 +206,8 @@ const AdminPanel: React.FC<Props> = ({ currentFortunes, onUpdateFortunes, curren
                             />
                             <button 
                                 onClick={handleSaveConfig}
-                                className="px-6 py-3 bg-farm-dark text-white rounded-xl text-sm font-bold hover:bg-black transition-colors shadow-lg"
+                                disabled={isProcessing}
+                                className="px-6 py-3 bg-farm-dark text-white rounded-xl text-sm font-bold hover:bg-black transition-colors shadow-lg disabled:opacity-50"
                             >
                                 Save
                             </button>
@@ -209,12 +228,13 @@ const AdminPanel: React.FC<Props> = ({ currentFortunes, onUpdateFortunes, curren
                             <div className="flex flex-col gap-2">
                                 <button 
                                     onClick={() => logoInputRef.current?.click()}
-                                    className="text-xs px-4 py-2 bg-farm-bg hover:bg-farm-border text-farm-dark rounded-lg font-bold transition-colors"
+                                    disabled={isProcessing}
+                                    className="text-xs px-4 py-2 bg-farm-bg hover:bg-farm-border text-farm-dark rounded-lg font-bold transition-colors disabled:opacity-50"
                                 >
                                     Upload Logo
                                 </button>
                                 {currentConfig.customLogo && (
-                                    <button onClick={handleRemoveLogo} className="text-[10px] text-farm-red hover:underline text-left px-1">
+                                    <button onClick={handleRemoveLogo} disabled={isProcessing} className="text-[10px] text-farm-red hover:underline text-left px-1">
                                         Reset to Default
                                     </button>
                                 )}
@@ -310,7 +330,8 @@ const AdminPanel: React.FC<Props> = ({ currentFortunes, onUpdateFortunes, curren
 
                         <button 
                             onClick={handleAddFortune}
-                            className="w-full py-4 bg-farm-red text-white rounded-2xl hover:bg-farm-red-dark font-bold shadow-xl shadow-farm-red/20 transform hover:-translate-y-1 transition-all mt-6 text-lg"
+                            disabled={isProcessing}
+                            className="w-full py-4 bg-farm-red text-white rounded-2xl hover:bg-farm-red-dark font-bold shadow-xl shadow-farm-red/20 transform hover:-translate-y-1 transition-all mt-6 text-lg disabled:opacity-50 disabled:transform-none"
                         >
                             Add to Box
                         </button>
@@ -341,6 +362,7 @@ const AdminPanel: React.FC<Props> = ({ currentFortunes, onUpdateFortunes, curren
                                             <img src={f.imageUrl} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" alt="Fortune illustration" />
                                             <button 
                                                 onClick={() => handleRemoveImage(f.id)}
+                                                disabled={isProcessing}
                                                 className="absolute top-2 right-2 bg-white rounded-full p-1.5 text-farm-red shadow-md opacity-0 group-hover:opacity-100 transition-all hover:scale-110"
                                             >
                                                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" className="w-4 h-4"><path d="M18 6L6 18M6 6l12 12"/></svg>
@@ -352,7 +374,8 @@ const AdminPanel: React.FC<Props> = ({ currentFortunes, onUpdateFortunes, curren
                                 </div>
                                 <button 
                                     onClick={() => handleUploadClick(f.id)}
-                                    className="w-full py-2.5 text-xs border border-farm-border bg-white rounded-xl hover:bg-farm-bg text-farm-gray font-bold flex items-center justify-center gap-2 transition-colors uppercase tracking-wide"
+                                    disabled={isProcessing}
+                                    className="w-full py-2.5 text-xs border border-farm-border bg-white rounded-xl hover:bg-farm-bg text-farm-gray font-bold flex items-center justify-center gap-2 transition-colors uppercase tracking-wide disabled:opacity-50"
                                 >
                                     <ImageIcon className="w-4 h-4"/> {f.imageUrl ? "Change" : "Upload"}
                                 </button>
@@ -362,7 +385,7 @@ const AdminPanel: React.FC<Props> = ({ currentFortunes, onUpdateFortunes, curren
                             <div className="flex-1 space-y-3 w-full">
                                 <div className="flex justify-between items-start">
                                     <span className="font-bold text-xs bg-farm-bg text-farm-red px-4 py-2 rounded-full uppercase tracking-widest border border-farm-border">{f.level}</span>
-                                    <button onClick={() => handleDelete(f.id)} className="text-farm-border hover:text-farm-red w-8 h-8 flex items-center justify-center rounded-full hover:bg-farm-bg transition-colors">
+                                    <button onClick={() => handleDelete(f.id)} disabled={isProcessing} className="text-farm-border hover:text-farm-red w-8 h-8 flex items-center justify-center rounded-full hover:bg-farm-bg transition-colors disabled:opacity-50">
                                         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" className="w-5 h-5"><path d="M18 6L6 18M6 6l12 12"/></svg>
                                     </button>
                                 </div>
