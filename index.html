@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Kaya's Village Shrine</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Dokdo&family=Quicksand:wght@400;500;600;700&family=Zen+Maru+Gothic:wght@400;500;700;900&display=swap" rel="stylesheet">
+    <script>
+      tailwind.config = {
+        theme: {
+          extend: {
+            colors: {
+              'farm-bg': '#F6F5EF',
+              'farm-dark': '#4A4541',
+              'farm-gray': '#8E8883',
+              'farm-red': '#CC5D4C',
+              'farm-red-dark': '#A84535',
+              'farm-green': '#7FA66F',
+              'farm-border': '#E6E2D8',
+              'farm-paper': '#FFFFFF',
+            },
+            fontFamily: {
+              sans: ['Quicksand', 'sans-serif'],
+              heading: ['Zen Maru Gothic', 'sans-serif'],
+              dokdo: ['Dokdo', 'cursive'],
+            }
+          }
+        }
+      }
+    </script>
+    <style>
+      body {
+        font-family: 'Quicksand', 'Zen Maru Gothic', sans-serif;
+        background-color: #F6F5EF; /* farm-bg */
+        color: #4A4541; /* farm-dark */
+      }
+      
+      /* Print styles for saving the fortune */
+      @media print {
+        body {
+          visibility: hidden;
+          background-color: white;
+        }
+        
+        #root {
+          display: none;
+        }
+
+        /* Ensure the container itself is visible */
+        #fortune-slip-container {
+          visibility: visible;
+          display: block !important;
+          position: fixed;
+          top: 0;
+          left: 0;
+          width: 100%;
+          height: 100%;
+          margin: 0;
+          padding: 20px;
+          border: none;
+          box-shadow: none;
+          z-index: 9999;
+          background-color: white;
+        }
+
+        /* Ensure all children of the container are visible */
+        #fortune-slip-container * {
+          visibility: visible;
+        }
+
+        .no-print {
+          display: none !important;
+        }
+      }
+
+      /* Custom Animations */
+      @keyframes glow {
+        0%, 100% { box-shadow: 0 0 15px rgba(204, 93, 76, 0.2); }
+        50% { box-shadow: 0 0 30px rgba(204, 93, 76, 0.6), 0 0 10px rgba(255, 255, 255, 0.5); }
+      }
+      .animate-glow {
+        animation: glow 1.5s ease-in-out infinite;
+      }
+
+      @keyframes slideUpReveal {
+        0% { 
+          opacity: 0;
+          transform: translateY(100px) scale(0.95);
+          filter: blur(4px);
+        }
+        100% { 
+          opacity: 1;
+          transform: translateY(0) scale(1);
+          filter: blur(0);
+        }
+      }
+      .animate-slide-up-reveal {
+        animation: slideUpReveal 1.2s cubic-bezier(0.2, 0.8, 0.2, 1) forwards;
+      }
+    </style>
+  <script type="importmap">
+{
+  "imports": {
+    "react": "https://aistudiocdn.com/react@^19.2.0",
+    "react-dom/": "https://aistudiocdn.com/react-dom@^19.2.0/",
+    "react/": "https://aistudiocdn.com/react@^19.2.0/",
+    "@google/genai": "https://aistudiocdn.com/@google/genai@^1.30.0"
+  }
+}
+</script>
+</head>
+  <body>
+    <div id="root"></div>
+  </body>
+</html>
