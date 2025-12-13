@@ -47,8 +47,17 @@ const AdminPanel: React.FC<Props> = ({ currentFortunes, onUpdateFortunes, curren
 
   const handleLogoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
+      const file = e.target.files[0];
+
+      // Size check (approx 500KB limit to be safe with LocalStorage)
+      if (file.size > 500 * 1024) {
+          alert("Logo image is too large. Please use a compressed image under 500KB.");
+          if (logoInputRef.current) logoInputRef.current.value = '';
+          return;
+      }
+
       try {
-        const base64 = await fileToBase64(e.target.files[0]);
+        const base64 = await fileToBase64(file);
         onUpdateConfig({ ...currentConfig, customLogo: base64 });
       } catch (err) {
         alert("Failed to process logo image.");

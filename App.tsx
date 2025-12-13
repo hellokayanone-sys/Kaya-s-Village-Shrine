@@ -67,8 +67,13 @@ const App = () => {
   };
 
   const saveConfig = (newConfig: AppConfig) => {
-      setConfig(newConfig);
-      localStorage.setItem(STORAGE_KEY_CONFIG, JSON.stringify(newConfig));
+      try {
+          localStorage.setItem(STORAGE_KEY_CONFIG, JSON.stringify(newConfig));
+          setConfig(newConfig);
+      } catch (e) {
+          console.error("Failed to save config to localStorage:", e);
+          alert("Could not save settings. Storage might be full or the image is too large.");
+      }
   };
 
   const getUserRecord = (email: string) => userHistory.find(u => u.email === email);
