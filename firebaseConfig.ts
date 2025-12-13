@@ -10,6 +10,8 @@ import { getDatabase } from "firebase/database";
 const firebaseConfig = {
   apiKey: "AIzaSyC9TAtU0T7VvBUdN4auPLoW3lEo6rBLytE",
   authDomain: "kaya-s-village-shrine.firebaseapp.com",
+  // The error message provided this URL. It is required for Realtime Database.
+  databaseURL: "https://kaya-s-village-shrine-default-rtdb.firebaseio.com",
   projectId: "kaya-s-village-shrine",
   storageBucket: "kaya-s-village-shrine.firebasestorage.app",
   messagingSenderId: "347503970974",
