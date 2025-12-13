@@ -107,7 +107,7 @@ const App = () => {
         if (slip) {
             setRevealedFortune(slip);
             setView('REVEAL');
-            alert(`Welcome back, traveler. You have already received your guidance for ${currentMonth}.`);
+            alert(`Welcome back, friend. You have already received your blessing for ${currentMonth}. Come back for your next blessing when the moon begins again. `);
         } else {
              // Fallback if slip was deleted
              alert("The spirits are confused. Your previous fortune was lost. Please see the shrine keeper.");
