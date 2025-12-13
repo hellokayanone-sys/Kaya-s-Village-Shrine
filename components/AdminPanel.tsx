@@ -49,9 +49,9 @@ const AdminPanel: React.FC<Props> = ({ currentFortunes, onUpdateFortunes, curren
     if (e.target.files && e.target.files[0]) {
       const file = e.target.files[0];
 
-      // Size check (approx 500KB limit to be safe with LocalStorage)
-      if (file.size > 500 * 1024) {
-          alert("Logo image is too large. Please use a compressed image under 500KB.");
+      // Size check (1MB limit to be safe with LocalStorage)
+      if (file.size > 1024 * 1024) {
+          alert("Logo image is too large. Please use a compressed image under 1MB.");
           if (logoInputRef.current) logoInputRef.current.value = '';
           return;
       }
@@ -127,9 +127,9 @@ const AdminPanel: React.FC<Props> = ({ currentFortunes, onUpdateFortunes, curren
   const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file && activeFortuneIdForUpload) {
-        // Simple size check (approx 500KB limit to be safe with LocalStorage)
-        if (file.size > 500 * 1024) {
-            alert("Image file is too large. Please use a compressed image under 500KB.");
+        // Simple size check (1MB limit to be safe with LocalStorage)
+        if (file.size > 1024 * 1024) {
+            alert("Image file is too large. Please use a compressed image under 1MB.");
             return;
         }
 
