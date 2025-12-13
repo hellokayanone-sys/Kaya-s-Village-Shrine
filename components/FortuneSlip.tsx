@@ -1,9 +1,7 @@
 import React, { useState } from 'react';
 import { FortuneSlip as IFortuneSlip } from '../types';
 import { ImageIcon, ArrowLeftIcon, ShareIcon } from './Icons';
-
-// Add global declaration for html2canvas
-declare const html2canvas: any;
+import html2canvas from 'html2canvas';
 
 interface Props {
   fortune: IFortuneSlip;
@@ -16,7 +14,7 @@ const FortuneSlip: React.FC<Props> = ({ fortune, onClose }) => {
   const handleSaveImage = async () => {
     setIsSaving(true);
     const element = document.getElementById('fortune-slip-container');
-    if (element && typeof html2canvas !== 'undefined') {
+    if (element) {
       try {
         const canvas = await html2canvas(element, { 
             scale: 2, 
