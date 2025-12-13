@@ -16,11 +16,39 @@ const FortuneSlip: React.FC<Props> = ({ fortune, onClose }) => {
     const element = document.getElementById('fortune-slip-container');
     if (element) {
       try {
+        // Target: 1080 x 1920 (9:16 aspect ratio)
+        // We set the logical size to 360x640 (standard mobile ratio) and scale by 3.
         const canvas = await html2canvas(element, { 
-            scale: 2, 
-            backgroundColor: null,
+            scale: 3, 
+            backgroundColor: '#FFFFFF', // White paper background
             logging: false,
-            useCORS: true // Help with external images if CORS allows
+            useCORS: true,
+            onclone: (clonedDoc) => {
+                const clonedElement = clonedDoc.getElementById('fortune-slip-container');
+                if (clonedElement) {
+                    // Force Phone Aspect Ratio Dimensions
+                    clonedElement.style.width = '360px';
+                    clonedElement.style.height = '640px';
+                    clonedElement.style.maxWidth = 'none';
+                    clonedElement.style.maxHeight = 'none';
+                    
+                    // Reset container styling for a full-screen wallpaper look
+                    clonedElement.style.borderRadius = '0';
+                    clonedElement.style.border = 'none';
+                    clonedElement.style.boxShadow = 'none';
+                    clonedElement.style.margin = '0';
+                    clonedElement.style.padding = '32px 24px'; // Adjusted padding
+                    
+                    // Adjust layout distribution
+                    clonedElement.style.display = 'flex';
+                    clonedElement.style.flexDirection = 'column';
+                    clonedElement.style.justifyContent = 'space-between';
+                    
+                    // Ensure text scales reasonably if needed, but defaults are usually fine
+                    // We can hide the "Details Container" background hint if it causes issues
+                    // or tweak specific margins inside if we had refs, but generic should work.
+                }
+            }
         });
         const link = document.createElement('a');
         link.download = `fortune-${fortune.month}-${Date.now()}.png`;
