@@ -16,74 +16,205 @@ const FortuneSlip: React.FC<Props> = ({ fortune, onClose }) => {
     const element = document.getElementById('fortune-slip-container');
     if (element) {
       try {
-        const canvas = await html2canvas(element, {
-          scale: 2,
+        // Create a temporary wrapper with fixed phone dimensions
+        const wrapper = document.createElement('div');
+        wrapper.style.width = '1080px';
+        wrapper.style.height = '1920px';
+        wrapper.style.backgroundColor = '#FFFFFF';
+        wrapper.style.position = 'absolute';
+        wrapper.style.left = '-10000px';
+        wrapper.style.top = '0';
+        wrapper.style.fontFamily = "'Zen Maru Gothic', sans-serif";
+        
+        // Clone and style the fortune slip for phone wallpaper
+        const clonedElement = element.cloneNode(true) as HTMLElement;
+        clonedElement.id = 'fortune-slip-wallpaper';
+        
+        // Reset all styles for consistent phone wallpaper
+        clonedElement.style.width = '100%';
+        clonedElement.style.height = '100%';
+        clonedElement.style.maxWidth = 'none';
+        clonedElement.style.padding = '60px 40px';
+        clonedElement.style.margin = '0';
+        clonedElement.style.backgroundColor = '#FFFFFF';
+        clonedElement.style.borderRadius = '0';
+        clonedElement.style.border = 'none';
+        clonedElement.style.boxShadow = 'none';
+        clonedElement.style.display = 'flex';
+        clonedElement.style.flexDirection = 'column';
+        clonedElement.style.justifyContent = 'space-between';
+        clonedElement.style.alignItems = 'center';
+        clonedElement.style.textAlign = 'center';
+        clonedElement.style.boxSizing = 'border-box';
+        
+        // Hide decorative elements
+        const decorativeElements = clonedElement.querySelectorAll('.absolute');
+        decorativeElements.forEach(el => {
+          if (!el.classList.contains('fortune-footer')) {
+            (el as HTMLElement).style.display = 'none';
+          }
+        });
+        
+        // Style header text
+        const headerText = clonedElement.querySelector('.fortune-header-text');
+        if (headerText) {
+          (headerText as HTMLElement).style.fontSize = '24px';
+          (headerText as HTMLElement).style.margin = '0 0 30px 0';
+          (headerText as HTMLElement).style.letterSpacing = '8px';
+        }
+        
+        // Style main level
+        const mainLevel = clonedElement.querySelector('h2');
+        if (mainLevel) {
+          (mainLevel as HTMLElement).style.fontSize = '120px';
+          (mainLevel as HTMLElement).style.margin = '20px 0';
+          (mainLevel as HTMLElement).style.lineHeight = '1';
+        }
+        
+        // Style level description
+        const levelDesc = clonedElement.querySelector('p');
+        if (levelDesc && !levelDesc.classList.contains('fortune-poem')) {
+          (levelDesc as HTMLElement).style.fontSize = '28px';
+          (levelDesc as HTMLElement).style.margin = '10px 0 40px 0';
+        }
+        
+        // Style image
+        const img = clonedElement.querySelector('img');
+        if (img) {
+          (img as HTMLElement).style.width = '320px';
+          (img as HTMLElement).style.height = '320px';
+          (img as HTMLElement).style.margin = '30px 0';
+          (img as HTMLElement).style.borderRadius = '40px';
+        }
+        
+        // Style poem
+        const poem = clonedElement.querySelector('.fortune-poem');
+        if (poem) {
+          (poem as HTMLElement).style.fontSize = '32px';
+          (poem as HTMLElement).style.lineHeight = '1.4';
+          (poem as HTMLElement).style.margin = '40px 0';
+          (poem as HTMLElement).style.padding = '0 40px';
+          (poem as HTMLElement).style.maxWidth = '1000px';
+          
+          // Hide quote marks
+          const quotes = poem.querySelectorAll('span');
+          quotes.forEach(quote => {
+            (quote as HTMLElement).style.display = 'none';
+          });
+        }
+        
+        // Style details container
+        const details = clonedElement.querySelector('.fortune-details-container');
+        if (details) {
+          (details as HTMLElement).style.width = '100%';
+          (details as HTMLElement).style.maxWidth = '1000px';
+          (details as HTMLElement).style.margin = '40px 0 0 0';
+          (details as HTMLElement).style.padding = '50px 40px';
+          (details as HTMLElement).style.borderRadius = '60px';
+          
+          // Style section header
+          const sectionHeader = details.querySelector('h4');
+          if (sectionHeader) {
+            (sectionHeader as HTMLElement).style.fontSize = '22px';
+            (sectionHeader as HTMLElement).style.margin = '0 0 30px 0';
+            (sectionHeader as HTMLElement).style.letterSpacing = '4px';
+          }
+          
+          // Style stat grid
+          const statGrid = details.querySelector('.stat-grid');
+          if (statGrid) {
+            (statGrid as HTMLElement).style.display = 'grid';
+            (statGrid as HTMLElement).style.gridTemplateColumns = '1fr 1fr';
+            (statGrid as HTMLElement).style.gap = '20px';
+            (statGrid as HTMLElement).style.margin = '0 0 40px 0';
+          }
+          
+          // Style stat boxes
+          const statBoxes = details.querySelectorAll('.stat-box');
+          statBoxes.forEach(box => {
+            (box as HTMLElement).style.padding = '30px 20px';
+            (box as HTMLElement).style.borderRadius = '30px';
+            (box as HTMLElement).style.textAlign = 'center';
+            
+            const label = box.querySelector('div:first-child');
+            const value = box.querySelector('div:last-child');
+            
+            if (label) {
+              (label as HTMLElement).style.fontSize = '18px';
+              (label as HTMLElement).style.marginBottom = '8px';
+            }
+            if (value) {
+              (value as HTMLElement).style.fontSize = '26px';
+              (value as HTMLElement).style.lineHeight = '1.2';
+            }
+          });
+          
+          // Style advice items
+          const adviceItems = details.querySelectorAll('.advice-item');
+          adviceItems.forEach(item => {
+            (item as HTMLElement).style.padding = '25px 30px';
+            (item as HTMLElement).style.margin = '15px 0';
+            (item as HTMLElement).style.borderRadius = '30px';
+            (item as HTMLElement).style.display = 'flex';
+            (item as HTMLElement).style.alignItems = 'flex-start';
+            (item as HTMLElement).style.gap = '20px';
+            (item as HTMLElement).style.textAlign = 'left';
+            
+            const icon = item.querySelector('span:first-child');
+            const content = item.querySelector('div');
+            
+            if (icon) {
+              (icon as HTMLElement).style.fontSize = '32px';
+              (icon as HTMLElement).style.flexShrink = '0';
+            }
+            
+            if (content) {
+              const label = content.querySelector('b');
+              const text = content.querySelector('p');
+              
+              if (label) {
+                (label as HTMLElement).style.fontSize = '20px';
+                (label as HTMLElement).style.marginBottom = '8px';
+                (label as HTMLElement).style.display = 'block';
+              }
+              if (text) {
+                (text as HTMLElement).style.fontSize = '24px';
+                (text as HTMLElement).style.lineHeight = '1.3';
+                (text as HTMLElement).style.margin = '0';
+              }
+            }
+          });
+        }
+        
+        // Style footer
+        const footer = clonedElement.querySelector('.fortune-footer');
+        if (footer) {
+          (footer as HTMLElement).style.position = 'absolute';
+          (footer as HTMLElement).style.bottom = '30px';
+          (footer as HTMLElement).style.right = '50px';
+          (footer as HTMLElement).style.fontSize = '18px';
+          (footer as HTMLElement).style.letterSpacing = '2px';
+        }
+        
+        // Add to wrapper and document
+        wrapper.appendChild(clonedElement);
+        document.body.appendChild(wrapper);
+        
+        // Capture with html2canvas
+        const canvas = await html2canvas(wrapper, {
+          scale: 1,
           backgroundColor: '#FFFFFF',
           logging: false,
           useCORS: true,
           allowTaint: true,
-          onclone: (clonedDoc) => {
-            const clonedElement = clonedDoc.getElementById('fortune-slip-container');
-            if (clonedElement) {
-              // Remove decorative elements and borders for wallpaper
-              clonedElement.style.borderRadius = '0';
-              clonedElement.style.border = 'none';
-              clonedElement.style.boxShadow = 'none';
-              
-              // Hide decorative header elements
-              const decorativeElements = clonedElement.querySelectorAll('.absolute');
-              decorativeElements.forEach(el => {
-                if (!el.classList.contains('fortune-footer')) {
-                  (el as HTMLElement).style.display = 'none';
-                }
-              });
-              
-              // Adjust padding to fit phone screen better
-              clonedElement.style.padding = '20px 16px';
-              
-              // Slightly reduce spacing between elements
-              const spaceElements = clonedElement.querySelectorAll('.space-y-8');
-              spaceElements.forEach(el => {
-                (el as HTMLElement).style.gap = '16px';
-              });
-              
-              // Reduce image size slightly if needed
-              const img = clonedElement.querySelector('img');
-              if (img) {
-                (img as HTMLElement).style.width = '240px';
-                (img as HTMLElement).style.height = '240px';
-              }
-              
-              // Reduce poem container padding
-              const poem = clonedElement.querySelector('.fortune-poem');
-              if (poem) {
-                (poem as HTMLElement).style.padding = '0 20px';
-                (poem as HTMLElement).style.fontSize = '18px';
-              }
-              
-              // Reduce details container padding
-              const details = clonedElement.querySelector('.fortune-details-container');
-              if (details) {
-                (details as HTMLElement).style.padding = '24px 20px';
-                (details as HTMLElement).style.marginTop = '16px';
-              }
-              
-              // Reduce advice item padding
-              const adviceItems = details?.querySelectorAll('.advice-item');
-              adviceItems?.forEach(item => {
-                (item as HTMLElement).style.padding = '12px 16px';
-                (item as HTMLElement).style.marginBottom = '8px';
-              });
-              
-              // Reduce stat box padding
-              const statBoxes = details?.querySelectorAll('.stat-box');
-              statBoxes?.forEach(box => {
-                (box as HTMLElement).style.padding = '12px 8px';
-              });
-            }
-          }
+          width: 1080,
+          height: 1920
         });
         
+        // Clean up
+        document.body.removeChild(wrapper);
+        
+        // Download
         const link = document.createElement('a');
         link.download = `fortune-wallpaper-${fortune.month}-${Date.now()}.png`;
         link.href = canvas.toDataURL('image/png');
