@@ -16,50 +16,83 @@ const FortuneSlip: React.FC<Props> = ({ fortune, onClose }) => {
     const element = document.getElementById('fortune-slip-container');
     if (element) {
       try {
-        // Target: 1080 x 1920 (9:16 aspect ratio)
-        // We set the logical size to 360x640 (standard mobile ratio) and scale by 3.
-        const canvas = await html2canvas(element, { 
-            scale: 3, 
-            backgroundColor: '#FFFFFF', // White paper background
-            logging: false,
-            useCORS: true,
-            onclone: (clonedDoc) => {
-                const clonedElement = clonedDoc.getElementById('fortune-slip-container');
-                if (clonedElement) {
-                    // Force Phone Aspect Ratio Dimensions
-                    clonedElement.style.width = '360px';
-                    clonedElement.style.height = '640px';
-                    clonedElement.style.maxWidth = 'none';
-                    clonedElement.style.maxHeight = 'none';
-                    
-                    // Reset container styling for a full-screen wallpaper look
-                    clonedElement.style.borderRadius = '0';
-                    clonedElement.style.border = 'none';
-                    clonedElement.style.boxShadow = 'none';
-                    clonedElement.style.margin = '0';
-                    clonedElement.style.padding = '32px 24px'; // Adjusted padding
-                    
-                    // Adjust layout distribution
-                    clonedElement.style.display = 'flex';
-                    clonedElement.style.flexDirection = 'column';
-                    clonedElement.style.justifyContent = 'space-between';
-                    
-                    // Ensure text scales reasonably if needed, but defaults are usually fine
-                    // We can hide the "Details Container" background hint if it causes issues
-                    // or tweak specific margins inside if we had refs, but generic should work.
+        const canvas = await html2canvas(element, {
+          scale: 2,
+          backgroundColor: '#FFFFFF',
+          logging: false,
+          useCORS: true,
+          allowTaint: true,
+          onclone: (clonedDoc) => {
+            const clonedElement = clonedDoc.getElementById('fortune-slip-container');
+            if (clonedElement) {
+              // Remove decorative elements and borders for wallpaper
+              clonedElement.style.borderRadius = '0';
+              clonedElement.style.border = 'none';
+              clonedElement.style.boxShadow = 'none';
+              
+              // Hide decorative header elements
+              const decorativeElements = clonedElement.querySelectorAll('.absolute');
+              decorativeElements.forEach(el => {
+                if (!el.classList.contains('fortune-footer')) {
+                  (el as HTMLElement).style.display = 'none';
                 }
+              });
+              
+              // Adjust padding to fit phone screen better
+              clonedElement.style.padding = '20px 16px';
+              
+              // Slightly reduce spacing between elements
+              const spaceElements = clonedElement.querySelectorAll('.space-y-8');
+              spaceElements.forEach(el => {
+                (el as HTMLElement).style.gap = '16px';
+              });
+              
+              // Reduce image size slightly if needed
+              const img = clonedElement.querySelector('img');
+              if (img) {
+                (img as HTMLElement).style.width = '300px';
+                (img as HTMLElement).style.height = '300px';
+              }
+              
+              // Reduce poem container padding
+              const poem = clonedElement.querySelector('.fortune-poem');
+              if (poem) {
+                (poem as HTMLElement).style.padding = '15 15px';
+                (poem as HTMLElement).style.fontSize = '18px';
+              }
+              
+              // Reduce details container padding
+              const details = clonedElement.querySelector('.fortune-details-container');
+              if (details) {
+                (details as HTMLElement).style.padding = '24px 24px';
+                (details as HTMLElement).style.marginTop = '24px';
+              }
+              
+              // Reduce advice item padding
+              const adviceItems = details?.querySelectorAll('.advice-item');
+              adviceItems?.forEach(item => {
+                (item as HTMLElement).style.padding = '10px 10px';
+                (item as HTMLElement).style.marginBottom = '8px';
+              });
+              
+              // Reduce stat box padding
+              const statBoxes = details?.querySelectorAll('.stat-box');
+              statBoxes?.forEach(box => {
+                (box as HTMLElement).style.padding = '12px 8px';
+              });
             }
+          }
         });
+        
         const link = document.createElement('a');
-        link.download = `fortune-${fortune.month}-${Date.now()}.png`;
+        link.download = `fortune-wallpaper-${fortune.month}-${Date.now()}.png`;
         link.href = canvas.toDataURL('image/png');
         link.click();
+        
       } catch (err) {
         console.error("Save failed:", err);
-        alert("Could not save image. You can try taking a screenshot.");
+        alert("Could not save image. Please try taking a screenshot.");
       }
-    } else {
-        window.print(); // Fallback
     }
     setIsSaving(false);
   };
@@ -95,10 +128,10 @@ const FortuneSlip: React.FC<Props> = ({ fortune, onClose }) => {
         style={{ fontFamily: "'Zen Maru Gothic', sans-serif" }}
       >
         {/* Decorative Header */}
-        <div className="absolute top-0 left-0 w-full h-4 bg-farm-bg" />
+        <div className="absolute top-0 left-0 w-full h-4 bg-farm-bg no-print" />
         <div className="absolute top-0 left-1/2 -translate-x-1/2 w-24 h-6 bg-farm-red rounded-b-2xl opacity-90" />
         
-        <div className="mt-6 text-xs tracking-[0.4em] text-farm-gray uppercase font-bold">Omikuji</div>
+        <div className="mt-6 text-xs tracking-[0.4em] text-farm-gray uppercase font-bold fortune-header-text">Omikuji</div>
         
         {/* Main Level */}
         <div className="relative">
@@ -113,7 +146,7 @@ const FortuneSlip: React.FC<Props> = ({ fortune, onClose }) => {
         </p>
 
         {/* Dynamic Illustration or Placeholder */}
-        <div className="py-2">
+        <div className="py-2 flex justify-center">
              {fortune.imageUrl ? (
                 <img src={fortune.imageUrl} alt={fortune.focusOn} className="w-72 h-72 object-contain rounded-[2rem] mix-blend-multiply" />
             ) : (
@@ -125,101 +158,95 @@ const FortuneSlip: React.FC<Props> = ({ fortune, onClose }) => {
 
         {/* Poem Content */}
         <div className="space-y-4 max-w-sm mx-auto">
-            <p className="text-farm-dark leading-relaxed text-xl font-medium font-heading italic relative px-6">
-                <span className="text-6xl text-farm-bg absolute -top-8 -left-2 font-serif select-none">“</span>
+            <p className="fortune-poem text-farm-dark leading-relaxed text-xl font-medium font-heading italic relative px-6">
+                <span className="text-6xl text-farm-bg absolute -top-8 -left-2 font-serif select-none opacity-40">"</span>
                 {fortune.poem}
-                <span className="text-6xl text-farm-bg absolute -bottom-10 -right-2 font-serif select-none">”</span>
+                <span className="text-6xl text-farm-bg absolute -bottom-10 -right-2 font-serif select-none opacity-40">"</span>
             </p>
         </div>
 
         {/* Details Container */}
-        <div className="w-full mt-8 bg-farm-bg p-8 rounded-[2.5rem] text-sm relative overflow-hidden">
-            {/* Background pattern hint */}
-            <div className="absolute top-0 right-0 w-32 h-32 bg-white rounded-full mix-blend-soft-light filter blur-2xl opacity-50 pointer-events-none translate-x-10 -translate-y-10"></div>
-
-            {/* Focus & Doing Well */}
-            <div className="grid grid-cols-2 gap-4 mb-8">
-                 <div className="text-center bg-white p-4 rounded-3xl border border-farm-border shadow-sm flex flex-col justify-center">
-                    <span className="block text-farm-gray text-[10px] uppercase tracking-wider mb-2 font-bold">Focus On</span>
-                    <span className="font-heading font-bold text-farm-dark text-lg">{fortune.focusOn}</span>
-                 </div>
-                 <div className="text-center bg-white p-4 rounded-3xl border border-farm-border shadow-sm flex flex-col justify-center">
-                    <span className="block text-farm-gray text-[10px] uppercase tracking-wider mb-2 font-bold">Doing Well</span>
-                    <span className="font-heading font-bold text-farm-dark text-lg">{fortune.doingWell}</span>
-                 </div>
-            </div>
-
-            {/* Advice Grid */}
-            <h4 className="text-center text-farm-gray text-xs uppercase tracking-wider mb-6 font-bold flex items-center justify-center gap-4">
-                <span className="h-px w-8 bg-farm-border"></span>
-                Level of Fortune
-                <span className="h-px w-8 bg-farm-border"></span>
-            </h4>
+        <div className="fortune-details-container w-full mt-8 bg-farm-bg p-8 rounded-[2.5rem] text-sm relative overflow-hidden">
+            <h4 className="text-xs font-bold uppercase tracking-widest text-farm-gray mb-4">Guidance for this Moon</h4>
             
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-left">
-                {[
-                    { label: 'Luck', val: fortune.advice.luck },
-                    { label: 'Happiness', val: fortune.advice.happiness },
-                    { label: 'Stress', val: fortune.advice.stress },
-                    { label: 'Health', val: fortune.advice.health }
-                ].map((item) => (
-                    <div key={item.label} className="bg-white p-5 rounded-[1.5rem] border border-farm-border/50 shadow-sm hover:shadow-md transition-shadow">
-                        <span className="text-farm-red font-bold block text-xs mb-2 uppercase tracking-wide">{item.label}</span>
-                        <span className="text-farm-dark font-medium leading-relaxed">{item.val}</span>
-                    </div>
-                ))}
+            <div className="grid grid-cols-2 gap-4 mb-6 stat-grid">
+                <div className="stat-box bg-white p-4 rounded-2xl border border-farm-border/30">
+                    <div className="text-[10px] font-bold text-farm-gray uppercase mb-1">Focus On</div>
+                    <div className="text-farm-dark font-bold text-base">{fortune.focusOn}</div>
+                </div>
+                <div className="stat-box bg-white p-4 rounded-2xl border border-farm-border/30">
+                    <div className="text-[10px] font-bold text-farm-gray uppercase mb-1">Doing Well</div>
+                    <div className="text-farm-dark font-bold text-base">{fortune.doingWell}</div>
+                </div>
             </div>
-        </div>
 
-        {/* Footer */}
-        <div className="absolute bottom-5 right-10 text-[10px] text-farm-gray font-bold tracking-wide opacity-60">
-            {fortune.month} • Kaya's Village Shrine
+            <div className="space-y-3 text-left">
+                <div className="advice-item bg-white/50 p-4 rounded-2xl flex items-start gap-3">
+                    <span className="text-lg">✨</span>
+                    <div>
+                        <b className="text-farm-dark block text-xs uppercase mb-1">Luck</b>
+                        <p className="text-farm-gray leading-snug">{fortune.advice.luck}</p>
+                    </div>
+                </div>
+                <div className="advice-item bg-white/50 p-4 rounded-2xl flex items-start gap-3">
+                    <span className="text-lg">🌱</span>
+                    <div>
+                        <b className="text-farm-dark block text-xs uppercase mb-1">Health</b>
+                        <p className="text-farm-gray leading-snug">{fortune.advice.health}</p>
+                    </div>
+                </div>
+                <div className="advice-item bg-white/50 p-4 rounded-2xl flex items-start gap-3">
+                    <span className="text-lg">😊</span>
+                    <div>
+                        <b className="text-farm-dark block text-xs uppercase mb-1">Happiness</b>
+                        <p className="text-farm-gray leading-snug">{fortune.advice.happiness}</p>
+                    </div>
+                </div>
+                <div className="advice-item bg-white/50 p-4 rounded-2xl flex items-start gap-3">
+                    <span className="text-lg">🍃</span>
+                    <div>
+                        <b className="text-farm-dark block text-xs uppercase mb-1">Stress</b>
+                        <p className="text-farm-gray leading-snug">{fortune.advice.stress}</p>
+                    </div>
+                </div>
+            </div>
+
+            <div className="fortune-footer mt-8 text-[10px] font-bold text-farm-gray/40 uppercase tracking-widest text-right">
+                Kaya's Village Shrine • {fortune.month}
+            </div>
         </div>
       </div>
 
-      {/* Actions (Not Printed) */}
-      <div className="w-full max-w-md px-4 mt-10 no-print space-y-4">
-        
-        {/* Row 1: Save & Share */}
-        <div className="flex gap-4">
-            <button 
-                onClick={handleSaveImage}
-                className="flex-1 flex items-center justify-center gap-2 px-8 py-5 bg-farm-dark text-white rounded-full hover:bg-black transition-all shadow-xl hover:shadow-2xl hover:-translate-y-1 font-bold"
-            >
-                {isSaving ? (
-                    <span className="animate-pulse">Saving...</span>
-                ) : (
-                    <>
-                        <ImageIcon className="w-5 h-5" />
-                        <span>Save Image</span>
-                    </>
-                )}
-            </button>
-            
-            <button 
-                onClick={handleShare}
-                className="flex-1 flex items-center justify-center gap-2 px-8 py-5 bg-white text-farm-dark border-2 border-farm-border rounded-full hover:bg-farm-bg transition-all shadow-md hover:shadow-lg font-bold"
-            >
-                <ShareIcon className="w-5 h-5" />
-                <span>Share</span>
-            </button>
-        </div>
-
-        {/* Gentle Reminder Text */}
-        <p className="text-center text-xs text-farm-gray/80 italic font-medium px-4 py-2">
-            Carry this with you for now. Another blessing will be waiting when the moon begins again.
-        </p>
-
-        {/* Row 2: Back */}
-        {onClose && (
-            <button 
-                onClick={onClose}
-                className="w-full flex items-center justify-center gap-2 px-6 py-5 bg-transparent text-farm-gray rounded-full hover:text-farm-dark hover:bg-white/50 transition-all font-bold text-sm"
-            >
-                <ArrowLeftIcon className="w-4 h-4" />
-                <span>Back to Entrance</span>
-            </button>
-        )}
+      {/* Action Buttons */}
+      <div className="flex gap-4 mt-12 no-print">
+        <button 
+          onClick={onClose}
+          className="p-5 rounded-full bg-white border-2 border-farm-border text-farm-gray hover:bg-farm-bg transition-colors shadow-lg group"
+          title="Back"
+        >
+          <ArrowLeftIcon className="w-6 h-6 group-hover:-translate-x-1 transition-transform" />
+        </button>
+        <button 
+          onClick={handleSaveImage}
+          disabled={isSaving}
+          className="flex-1 px-8 py-5 bg-farm-dark text-white rounded-full font-bold shadow-xl shadow-farm-dark/20 hover:scale-[1.02] active:scale-95 transition-all flex items-center justify-center gap-3 disabled:opacity-50"
+        >
+          {isSaving ? (
+              <span className="animate-pulse">Preparing...</span>
+          ) : (
+              <>
+                <ImageIcon className="w-5 h-5" />
+                Save Wallpaper
+              </>
+          )}
+        </button>
+        <button 
+          onClick={handleShare}
+          className="p-5 rounded-full bg-farm-red text-white hover:bg-farm-red-dark transition-colors shadow-lg shadow-farm-red/20 active:scale-95"
+          title="Share Fortune"
+        >
+          <ShareIcon className="w-6 h-6" />
+        </button>
       </div>
     </div>
   );
