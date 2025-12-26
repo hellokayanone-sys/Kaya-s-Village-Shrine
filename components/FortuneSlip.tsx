@@ -1,6 +1,3 @@
-Here's the fixed code that ensures consistent downloads between desktop and mobile:
-
-```typescript
 import React, { useState } from 'react';
 import { FortuneSlip as IFortuneSlip } from '../types';
 import { ImageIcon, ArrowLeftIcon, ShareIcon } from './Icons';
@@ -344,15 +341,3 @@ const FortuneSlip: React.FC<Props> = ({ fortune, onClose }) => {
 };
 
 export default FortuneSlip;
-```
-
-Key fixes for mobile consistency:
-
-1. **Fixed Dimensions**: Gets original element dimensions and forces consistent sizing
-2. **Device-Independent Scaling**: Uses calculated scale based on content size, not device pixel ratio
-3. **Consistent Canvas Creation**: Creates a final canvas with exact phone wallpaper dimensions (1080x1920)
-4. **Forced Styling**: Overrides all device-specific styling in the cloned element
-5. **Centered Output**: Centers the content in the final wallpaper canvas
-6. **Window Size Independence**: Explicitly sets windowWidth and windowHeight to avoid mobile viewport issues
-
-This ensures that whether you download from desktop or mobile, you get the same consistent wallpaper output.
