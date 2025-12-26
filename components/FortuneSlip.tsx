@@ -16,165 +16,77 @@ const FortuneSlip: React.FC<Props> = ({ fortune, onClose }) => {
     const element = document.getElementById('fortune-slip-container');
     if (element) {
       try {
-        // Get the original dimensions
-        const rect = element.getBoundingClientRect();
-        const originalWidth = rect.width;
-        const originalHeight = rect.height;
-        
-        // Calculate scale to fit phone screen (assuming 9:16 aspect ratio)
-        const targetWidth = 1080;
-        const targetHeight = 1920;
-        const scaleX = targetWidth / originalWidth;
-        const scaleY = targetHeight / originalHeight;
-        const scale = Math.min(scaleX, scaleY, 1); // Don't upscale, only downscale if needed
-
         const canvas = await html2canvas(element, {
-          scale: scale,
+          scale: 2,
           backgroundColor: '#FFFFFF',
           logging: false,
           useCORS: true,
           allowTaint: true,
-          width: originalWidth,
-          height: originalHeight,
-          windowWidth: window.innerWidth,
-          windowHeight: window.innerHeight,
-          scrollX: 0,
-          scrollY: 0,
-          onclone: (clonedDoc, clonedElement) => {
-            // Force consistent styling regardless of device
-            clonedElement.style.width = originalWidth + 'px';
-            clonedElement.style.height = originalHeight + 'px';
-            clonedElement.style.transform = 'none';
-            clonedElement.style.position = 'relative';
-            clonedElement.style.left = '0';
-            clonedElement.style.top = '0';
-            clonedElement.style.margin = '0';
-            
-            const fortuneContainer = clonedDoc.getElementById('fortune-slip-container');
-            if (fortuneContainer) {
+          onclone: (clonedDoc) => {
+            const clonedElement = clonedDoc.getElementById('fortune-slip-container');
+            if (clonedElement) {
               // Remove decorative elements and borders for wallpaper
-              fortuneContainer.style.borderRadius = '0';
-              fortuneContainer.style.border = 'none';
-              fortuneContainer.style.boxShadow = 'none';
-              fortuneContainer.style.width = originalWidth + 'px';
-              fortuneContainer.style.minHeight = 'auto';
-              fortuneContainer.style.maxWidth = 'none';
-              
-              // Force consistent font rendering
-              fortuneContainer.style.fontSize = '16px';
-              fortuneContainer.style.lineHeight = '1.5';
+              clonedElement.style.borderRadius = '0';
+              clonedElement.style.border = 'none';
+              clonedElement.style.boxShadow = 'none';
               
               // Hide decorative header elements
-              const decorativeElements = fortuneContainer.querySelectorAll('.absolute');
+              const decorativeElements = clonedElement.querySelectorAll('.absolute');
               decorativeElements.forEach(el => {
                 if (!el.classList.contains('fortune-footer')) {
                   (el as HTMLElement).style.display = 'none';
                 }
               });
               
-              // Ensure consistent spacing
-              fortuneContainer.style.padding = '32px 24px';
+              // Adjust padding to fit phone screen better
+              clonedElement.style.padding = '20px 16px';
               
-              // Fix image dimensions
-              const img = fortuneContainer.querySelector('img');
+              // Slightly reduce spacing between elements
+              const spaceElements = clonedElement.querySelectorAll('.space-y-8');
+              spaceElements.forEach(el => {
+                (el as HTMLElement).style.gap = '16px';
+              });
+              
+              // Reduce image size slightly if needed
+              const img = clonedElement.querySelector('img');
               if (img) {
-                (img as HTMLElement).style.width = '288px';
-                (img as HTMLElement).style.height = '288px';
-                (img as HTMLElement).style.maxWidth = '288px';
-                (img as HTMLElement).style.maxHeight = '288px';
+                (img as HTMLElement).style.width = '240px';
+                (img as HTMLElement).style.height = '240px';
               }
               
-              // Fix poem styling
-              const poem = fortuneContainer.querySelector('.fortune-poem');
+              // Reduce poem container padding
+              const poem = clonedElement.querySelector('.fortune-poem');
               if (poem) {
-                (poem as HTMLElement).style.fontSize = '20px';
-                (poem as HTMLElement).style.lineHeight = '1.6';
-                (poem as HTMLElement).style.padding = '0 24px';
-                (poem as HTMLElement).style.maxWidth = '400px';
+                (poem as HTMLElement).style.padding = '0 20px';
+                (poem as HTMLElement).style.fontSize = '18px';
               }
               
-              // Fix details container
-              const details = fortuneContainer.querySelector('.fortune-details-container');
+              // Reduce details container padding
+              const details = clonedElement.querySelector('.fortune-details-container');
               if (details) {
-                (details as HTMLElement).style.padding = '32px 24px';
-                (details as HTMLElement).style.marginTop = '24px';
-                (details as HTMLElement).style.width = '100%';
-                (details as HTMLElement).style.boxSizing = 'border-box';
-                
-                // Fix advice items
-                const adviceItems = details.querySelectorAll('.advice-item');
-                adviceItems.forEach(item => {
-                  (item as HTMLElement).style.padding = '16px 20px';
-                  (item as HTMLElement).style.marginBottom = '12px';
-                  (item as HTMLElement).style.fontSize = '14px';
-                });
-                
-                // Fix stat boxes
-                const statBoxes = details.querySelectorAll('.stat-box');
-                statBoxes.forEach(box => {
-                  (box as HTMLElement).style.padding = '16px 12px';
-                  (box as HTMLElement).style.fontSize = '14px';
-                });
-                
-                // Fix grid
-                const statGrid = details.querySelector('.stat-grid');
-                if (statGrid) {
-                  (statGrid as HTMLElement).style.gap = '16px';
-                  (statGrid as HTMLElement).style.marginBottom = '24px';
-                }
+                (details as HTMLElement).style.padding = '24px 20px';
+                (details as HTMLElement).style.marginTop = '16px';
               }
               
-              // Fix header text
-              const headerText = fortuneContainer.querySelector('.fortune-header-text');
-              if (headerText) {
-                (headerText as HTMLElement).style.fontSize = '12px';
-                (headerText as HTMLElement).style.marginTop = '16px';
-                (headerText as HTMLElement).style.marginBottom = '16px';
-              }
+              // Reduce advice item padding
+              const adviceItems = details?.querySelectorAll('.advice-item');
+              adviceItems?.forEach(item => {
+                (item as HTMLElement).style.padding = '12px 16px';
+                (item as HTMLElement).style.marginBottom = '8px';
+              });
               
-              // Fix main level text
-              const mainLevel = fortuneContainer.querySelector('h2');
-              if (mainLevel) {
-                (mainLevel as HTMLElement).style.fontSize = '48px';
-                (mainLevel as HTMLElement).style.margin = '16px 0';
-              }
-              
-              // Fix level description
-              const levelDesc = fortuneContainer.querySelector('p');
-              if (levelDesc && !levelDesc.classList.contains('fortune-poem')) {
-                (levelDesc as HTMLElement).style.fontSize = '14px';
-                (levelDesc as HTMLElement).style.margin = '8px 0 24px 0';
-              }
+              // Reduce stat box padding
+              const statBoxes = details?.querySelectorAll('.stat-box');
+              statBoxes?.forEach(box => {
+                (box as HTMLElement).style.padding = '12px 8px';
+              });
             }
           }
         });
         
-        // Create final canvas with proper dimensions
-        const finalCanvas = document.createElement('canvas');
-        const ctx = finalCanvas.getContext('2d');
-        
-        // Set canvas size to phone wallpaper dimensions
-        finalCanvas.width = targetWidth;
-        finalCanvas.height = targetHeight;
-        
-        if (ctx) {
-          // Fill with white background
-          ctx.fillStyle = '#FFFFFF';
-          ctx.fillRect(0, 0, targetWidth, targetHeight);
-          
-          // Calculate positioning to center the content
-          const scaledWidth = canvas.width;
-          const scaledHeight = canvas.height;
-          const x = (targetWidth - scaledWidth) / 2;
-          const y = (targetHeight - scaledHeight) / 2;
-          
-          // Draw the captured content centered
-          ctx.drawImage(canvas, x, y);
-        }
-        
         const link = document.createElement('a');
         link.download = `fortune-wallpaper-${fortune.month}-${Date.now()}.png`;
-        link.href = finalCanvas.toDataURL('image/png');
+        link.href = canvas.toDataURL('image/png');
         link.click();
         
       } catch (err) {
