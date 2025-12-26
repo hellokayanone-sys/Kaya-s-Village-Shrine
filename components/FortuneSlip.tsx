@@ -78,23 +78,36 @@ const FortuneSlip: React.FC<Props> = ({ fortune, onClose }) => {
           (levelDesc as HTMLElement).style.margin = '10px 0 40px 0';
         }
         
-        // Style image
+        // Style image - MUCH BIGGER
         const img = clonedElement.querySelector('img');
         if (img) {
           (img as HTMLElement).style.width = '320px';
           (img as HTMLElement).style.height = '320px';
           (img as HTMLElement).style.margin = '30px 0';
-          (img as HTMLElement).style.borderRadius = '40px';
+          (img as HTMLElement).style.borderRadius = '50px';
         }
         
-        // Style poem
+        // Also handle the placeholder icon case - MUCH BIGGER
+        const placeholderIcon = clonedElement.querySelector('div > span');
+        if (placeholderIcon && !img) {
+          const placeholderDiv = placeholderIcon.parentElement;
+          if (placeholderDiv) {
+            (placeholderDiv as HTMLElement).style.width = '320px';
+            (placeholderDiv as HTMLElement).style.height = '320px';
+            (placeholderDiv as HTMLElement).style.borderWidth = '8px';
+            (placeholderIcon as HTMLElement).style.fontSize = '120px';
+          }
+        }
+        
+        // Style poem - WIDER for more words per line
         const poem = clonedElement.querySelector('.fortune-poem');
         if (poem) {
           (poem as HTMLElement).style.fontSize = '32px';
           (poem as HTMLElement).style.lineHeight = '1.4';
           (poem as HTMLElement).style.margin = '40px 0';
-          (poem as HTMLElement).style.padding = '0 40px';
-          (poem as HTMLElement).style.maxWidth = '1000px';
+          (poem as HTMLElement).style.padding = '0 20px'; // Less padding for wider text
+          (poem as HTMLElement).style.maxWidth = '950px'; // Much wider container
+          (poem as HTMLElement).style.width = '100%';
           
           // Hide quote marks
           const quotes = poem.querySelectorAll('span');
