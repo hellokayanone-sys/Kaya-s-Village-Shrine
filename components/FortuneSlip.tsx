@@ -326,28 +326,28 @@ const FortuneSlip: React.FC<Props> = ({ fortune, onClose }) => {
 
             <div className="space-y-3 text-left">
                 <div className="advice-item bg-white/50 p-4 rounded-2xl flex items-start gap-3">
-                    <span className="text-lg">✨</span>
+                    <span className="text-lg">٠࣪⭑</span>
                     <div>
                         <b className="text-farm-dark block text-xs uppercase mb-1">Luck</b>
                         <p className="text-farm-gray leading-snug">{fortune.advice.luck}</p>
                     </div>
                 </div>
                 <div className="advice-item bg-white/50 p-4 rounded-2xl flex items-start gap-3">
-                    <span className="text-lg">🌱</span>
+                    <span className="text-lg">𖠰</span>
                     <div>
                         <b className="text-farm-dark block text-xs uppercase mb-1">Health</b>
                         <p className="text-farm-gray leading-snug">{fortune.advice.health}</p>
                     </div>
                 </div>
                 <div className="advice-item bg-white/50 p-4 rounded-2xl flex items-start gap-3">
-                    <span className="text-lg">😊</span>
+                    <span className="text-lg">☀︎</span>
                     <div>
                         <b className="text-farm-dark block text-xs uppercase mb-1">Happiness</b>
                         <p className="text-farm-gray leading-snug">{fortune.advice.happiness}</p>
                     </div>
                 </div>
                 <div className="advice-item bg-white/50 p-4 rounded-2xl flex items-start gap-3">
-                    <span className="text-lg">🍃</span>
+                    <span className="text-lg">꩜</span>
                     <div>
                         <b className="text-farm-dark block text-xs uppercase mb-1">Stress</b>
                         <p className="text-farm-gray leading-snug">{fortune.advice.stress}</p>
